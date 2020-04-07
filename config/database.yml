@@ -17,7 +17,7 @@ test:
 production:
   adapter: postgresql
   encoding: unicode
-  database: showoff_production
+  database: d609mvbocj8e96
   pool: 5
-  username: root
-  password:
+  username: caaoysbuqfgent
+  password: ba63d622f8bc1b79b384e84428cbb6c47acf5fc0f31a2bdf6a2e9bf8ab8a958b
