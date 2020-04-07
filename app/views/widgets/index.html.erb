@@ -1,0 +1,10 @@
+<div class="container">
+  <%= form_tag search_widgets_path, method: :post, id: 'SearchForm' do %>
+    <%= text_field_tag :search, params[:search],
+                       placeholder: 'Search your favourite widget',
+                       autocomplete: :off,
+                       class: 'form-control',
+                       id: 'SearchSearch' %>
+  <% end %>
+</div>
+<%= render partial: 'layouts/widgets' %>

@@ -1,0 +1,60 @@
+.modal-dialog {
+  width: 320px;
+}
+.modal-dialog .modal-content {
+  border-radius: 1px;
+  border: none;
+}
+.modal-dialog .modal-header {
+  position: relative;
+  justify-content: center;
+  background: #f2f2f2;
+}
+.modal-dialog .modal-body {
+  padding: 30px;
+}
+.modal-dialog .modal-footer {
+  background: #f2f2f2;
+}
+.modal-dialog h4 {
+  text-align: center;
+  font-size: 26px;
+}
+.modal-dialog label {
+  font-weight: normal;
+  font-size: 13px;
+}
+.modal-dialog .form-control, .modal-dialog .btn {
+  min-height: 38px;
+  border-radius: 2px;
+}
+.modal-dialog .hint-text {
+  text-align: center;
+}
+.modal-dialog .close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+.modal-dialog .checkbox-inline {
+  margin-top: 12px;
+}
+.modal-dialog input[type="checkbox"]{
+  margin-top: 2px;
+}
+.modal-dialog .btn {
+  min-width: 100px;
+  background: #3498db;
+  border: none;
+  line-height: normal;
+}
+.modal-dialog .btn:hover, .modal-dialog .btn:focus {
+  background: #248bd0;
+}
+.modal-dialog .hint-text a {
+  color: #999;
+}
+.trigger-btn {
+  display: inline-block;
+  margin: 100px auto;
+}

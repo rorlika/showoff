@@ -1,0 +1,16 @@
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+  <h5 class="my-0 mr-md-auto font-weight-normal">Showoff</h5>
+  <nav class="my-2 my-md-0 mr-md-3">
+  </nav>
+  <% if current_user %>
+    Signed in as <%= current_user.first_name %> | <%= link_to "Logout", '/users/logout' %>
+  <% else %>
+    <a class="btn btn-outline-primary" href="#loginModal" data-toggle="modal">Sign in</a>
+    <a class="btn btn-outline-primary" href="#signupModal" data-toggle="modal">Sign up</a>
+  <% end %>
+</div>
+
+<%= render 'layouts/modal/login' %>
+<%= render 'layouts/modal/signup' %>
+<%= render 'layouts/modal/create_widget' %>
+<%= render 'layouts/modal/reset_password' %>
