@@ -1,33 +1,37 @@
 class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
-  def current_user
-    @current_user ||= Showoff::UserService.new(session[:access_token]).show_me if session[:access_token]
-  end
+  private
 
-  helper_method :current_user
-
-  def authorize
-    redirect_to '/users/login' unless current_user
-  end
-
-  def fail_or_return_user(data)
-    if data.is_a?(OpenStruct) && data.token.present?
-      session[:access_token] = data.token.access_token
-      session[:refresh_token] = data.token.refresh_token
-      respond_to do |format|
-        format.html { redirect_to controller: 'user_widgets', action: 'index_me' }
-      end
+  def render_service_result(result, success_status: :ok)
+    if service_success?(result)
+      render json: extract_payload(result), status: success_status
     else
-      flash[:error] = data.message
-      redirect_to '/users/login'
+      render json: { error: extract_error(result) }, status: :unprocessable_entity
     end
   end
 
-  private
+  def service_success?(result)
+    return result.success? if result.respond_to?(:success?)
 
-  def showoff_credentials
-    { client_id: Rails.application.credentials.showoff_client_id,
-      client_secret: Rails.application.credentials.showoff_client_secret }
+    result.is_a?(Hash) && (result[:success] == true || result['success'] == true)
+  end
+
+  def extract_payload(result)
+    return result.payload if result.respond_to?(:payload)
+
+    return result[:data] if result.is_a?(Hash) && result.key?(:data)
+    return result['data'] if result.is_a?(Hash) && result.key?('data')
+
+    result
+  end
+
+  def extract_error(result)
+    return result.error if result.respond_to?(:error)
+
+    return result[:error] if result.is_a?(Hash) && result.key?(:error)
+    return result['error'] if result.is_a?(Hash) && result.key?('error')
+
+    'Unprocessable entity'
   end
 end
