@@ -1,24 +1,26 @@
 class SessionsController < ApplicationController
-  def new
-  end
+  def new; end
 
   def create
-    data = Showoff::AuthService.new(nil, session_params).create
-    fail_or_return_user(data)
+    response = Showoff::AuthService.new.login(login_params)
+
+    if response.success?
+      session[:user] = response.data
+      redirect_to root_path, notice: 'Successfully logged in.'
+    else
+      flash.now[:alert] = response.message || 'Invalid email or password.'
+      render :new
+    end
   end
 
   def destroy
-    session.delete(:access_token)
-    session.delete(:refresh_token)
-    redirect_to '/widgets'
+    reset_session
+    redirect_to root_path, notice: 'Successfully logged out.'
   end
 
   private
 
-  def session_params
-    params.merge!(client_id: Rails.application.credentials.showoff_client_id,
-                  client_secret: Rails.application.credentials.showoff_client_secret,
-                  grant_type: 'password')
-    params.permit(:username, :password, :client_id, :client_secret, :grant_type)
+  def login_params
+    params.require(:user).permit(:email, :password)
   end
 end
