@@ -1,48 +1,73 @@
-require "rails_helper"
+require 'rails_helper'
 
 RSpec.describe UsersController, type: :controller do
-  describe 'POST Users' do
-    describe 'when params are invalid' do
-      let(:params) do
-        {
-          user: {
-            first_name: 'first name',
-            last_name: 'last name',
-            password: 'password'
-          }
-        }
-      end
+  describe 'POST #create' do
+    let(:service) { instance_double(Showoff::UserService) }
 
-      it 'return error message' do
-        post :create, params: params
-        expect(response.status).to eq(302)
-        expect(flash[:error]).to match(/Email can't be blank/)
-      end
-    end
-  end
-
-  describe 'GET user' do
     before do
-      params = { username: 'user@showoff.ie', password: 'password' }
-      params.merge!(client_id: Rails.application.credentials.showoff_client_id,
-                    client_secret: Rails.application.credentials.showoff_client_secret,
-                    grant_type: 'password')
-      @user = Showoff::AuthService.new(nil, params).create
+      allow(Showoff::UserService).to receive(:new).and_return(service)
     end
 
-    it 'return user' do
-      get :show, params: { id: 3960 }, session: { access_token: @user.token.access_token}
-      expect(response.status).to eq(200)
-      expect(assigns(:user).name).to eq('showoff user')
-    end
-  end
+    context 'when registration succeeds' do
+      let(:user_data) { { 'id' => 9, 'token' => 'abc' } }
+      let(:response_obj) { OpenStruct.new(success?: true, data: user_data, message: nil) }
 
-  describe 'POST users/reset_password' do
-    describe 'when email is invalid' do
-      it 'return exact widget' do
-        post :reset_password, params: { user: { email: 'email@example.com' } }
-        expect(response.status).to eq(302)
-        expect(flash[:notice]).to match(/email@example.com is an invalid email address/)
+      it 'stores user in session and redirects to root with notice' do
+        allow(service).to receive(:register).and_return(response_obj)
+
+        post :create, params: { user: { name: 'Jane', email: 'jane@example.com', password: 'secret' } }
+
+        expect(session[:user]).to eq(user_data)
+        expect(response).to redirect_to(root_path)
+        expect(flash[:notice]).to eq('Account created successfully.')
+      end
+    end
+
+    context 'when registration fails with message' do
+      let(:response_obj) { OpenStruct.new(success?: false, data: nil, message: 'Email taken') }
+
+      it 'renders new with alert' do
+        allow(service).to receive(:register).and_return(response_obj)
+
+        post :create, params: { user: { name: 'Jane', email: 'jane@example.com', password: 'secret' } }
+
+        expect(response).to render_template(:new)
+        expect(flash.now[:alert]).to eq('Email taken')
+      end
+    end
+
+    context 'when registration fails without message' do
+      let(:response_obj) { OpenStruct.new(success?: false, data: nil, message: nil) }
+
+      it 'renders new with fallback alert' do
+        allow(service).to receive(:register).and_return(response_obj)
+
+        post :create, params: { user: { name: 'Jane', email: 'jane@example.com', password: 'secret' } }
+
+        expect(response).to render_template(:new)
+        expect(flash.now[:alert]).to eq('Unable to create account.')
+      end
+    end
+
+    describe 'GET #show' do
+      context 'when current user exists' do
+        it 'assigns current user' do
+          session[:user] = { 'id' => 1, 'name' => 'Me', 'token' => 't' }
+
+          get :show, params: { id: 1 }
+
+          expect(assigns(:user)).to eq(session[:user])
+          expect(response).to be_successful
+        end
+      end
+
+      context 'when current user missing' do
+        it 'redirects to login with alert' do
+          get :show, params: { id: 1 }
+
+          expect(response).to redirect_to('/users/login')
+          expect(flash[:alert]).to eq('You need to login first.')
+        end
       end
     end
   end

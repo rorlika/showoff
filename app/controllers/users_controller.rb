@@ -1,29 +1,41 @@
 class UsersController < ApplicationController
-  before_action :authorize, only: %i[show]
-
-  def new
-  end
-
   def create
-    data = Showoff::UserService.new(session[:access_token], user_params).create
-    fail_or_return_user(data)
+    response = Showoff::UserService.new.register(user_params)
+
+    if response.success?
+      session[:user] = response.data
+      redirect_to root_path, notice: 'Account created successfully.'
+    else
+      flash.now[:alert] = response.message || 'Unable to create account.'
+      render :new
+    end
   end
 
   def show
-    @user = Showoff::UserService.new(session[:access_token]).show(params[:id])
+    @user = current_user
+
+    unless @user
+      redirect_to '/users/login', alert: 'You need to login first.'
+    end
   end
 
   def reset_password
-    user = Showoff::UserService.new(nil, user_params).reset_password
-    flash[:notice] = user.message
-    redirect_to '/widgets'
+    response = Showoff::UserService.new.reset_password(reset_password_params)
+
+    if response.success?
+      redirect_to '/users/login', notice: 'Password reset instructions sent.'
+    else
+      redirect_to '/users/login', alert: response.message || 'Unable to reset password.'
+    end
   end
 
   private
 
   def user_params
-    permitted = params.permit(user: [:first_name, :last_name, :email, :password])
-    permitted.merge!(client_id: Rails.application.credentials.showoff_client_id,
-                  client_secret: Rails.application.credentials.showoff_client_secret)
+    params.require(:user).permit(:name, :email, :password, :image_url)
+  end
+
+  def reset_password_params
+    params.require(:user).permit(:email)
   end
 end

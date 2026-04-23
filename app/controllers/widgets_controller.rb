@@ -1,31 +1,48 @@
 class WidgetsController < ApplicationController
   def index
-    widgets
-  end
+    response = Showoff::WidgetService.new.visible_widgets
 
-  def search
-    widgets
-    respond_to do |format|
-      format.js  { render partial: 'layouts/widgets' , locals: { widgets: @widgets } }
-      format.html { render :index }
+    if response.success?
+      @widgets = response.data || []
+    else
+      @widgets = []
+      flash.now[:alert] = response.message || 'Unable to load widgets.'
     end
   end
 
   def create
-    data = Showoff::WidgetService.new(session[:access_token], widget_params).create
-    flash[:error] = data.message if data.message
-    respond_to do |format|
-      format.html { redirect_to controller: 'user_widgets', action: 'index_me' }
+    token = current_user&.token
+    response = Showoff::WidgetService.new.create(widget_params, token)
+
+    if response.success?
+      flash[:notice] = 'Widget was successfully created.'
+      redirect_to widgets_path
+    else
+      flash[:alert] = response.message || 'Unable to create widget.'
+      redirect_to widgets_path
     end
+  end
+
+  def search
+    response = Showoff::WidgetService.new.search(search_params)
+
+    if response.success?
+      @widgets = response.data || []
+    else
+      @widgets = []
+      flash.now[:alert] = response.message || 'Unable to search widgets.'
+    end
+
+    render :index
   end
 
   private
 
-  def widgets
-    @widgets ||= Showoff::WidgetService.new(session[:access_token]).all(params[:search])
+  def widget_params
+    params.require(:widget).permit(:name, :description, :kind)
   end
 
-  def widget_params
-    params.permit(widget: [:name, :description, :kind])
+  def search_params
+    params.permit(:term)
   end
 end
