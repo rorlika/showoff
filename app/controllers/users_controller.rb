@@ -1,29 +1,32 @@
 class UsersController < ApplicationController
-  before_action :authorize, only: %i[show]
-
-  def new
-  end
+  before_action :set_user_service
 
   def create
-    data = Showoff::UserService.new(session[:access_token], user_params).create
-    fail_or_return_user(data)
+    result = @user_service.create(user_params)
+    render_service_result(result, success_status: :created)
   end
 
   def show
-    @user = Showoff::UserService.new(session[:access_token]).show(params[:id])
+    result = @user_service.show(params[:id])
+    render_service_result(result)
   end
 
   def reset_password
-    user = Showoff::UserService.new(nil, user_params).reset_password
-    flash[:notice] = user.message
-    redirect_to '/widgets'
+    result = @user_service.reset_password(reset_password_params)
+    render_service_result(result)
   end
 
   private
 
+  def set_user_service
+    @user_service = Showoff::UserService.new(session)
+  end
+
   def user_params
-    permitted = params.permit(user: [:first_name, :last_name, :email, :password])
-    permitted.merge!(client_id: Rails.application.credentials.showoff_client_id,
-                  client_secret: Rails.application.credentials.showoff_client_secret)
+    params.require(:user).permit(:name, :email, :password)
+  end
+
+  def reset_password_params
+    params.require(:user).permit(:email)
   end
 end
