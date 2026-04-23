@@ -20,7 +20,7 @@ Rails.application.routes.draw do
     get '/logout', to: 'sessions#destroy'
   end
 
-  resources :users, only: %i[create show] do
+  resources :users, only: %i[create show destroy] do
     collection do
       post 'reset_password'
     end

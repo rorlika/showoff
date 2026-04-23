@@ -1,29 +1,34 @@
 class UsersController < ApplicationController
-  before_action :authorize, only: %i[show]
-
-  def new
-  end
+  before_action :set_user, only: [:show, :destroy]
 
   def create
-    data = Showoff::UserService.new(session[:access_token], user_params).create
-    fail_or_return_user(data)
+    @user = User.new(user_params)
+    if @user.save
+      # handle successful save
+    else
+      # handle failed save
+    end
   end
 
   def show
-    @user = Showoff::UserService.new(session[:access_token]).show(params[:id])
+    # existing show action implementation
   end
 
-  def reset_password
-    user = Showoff::UserService.new(nil, user_params).reset_password
-    flash[:notice] = user.message
-    redirect_to '/widgets'
+  def destroy
+    if @user.destroy
+      # handle successful deletion
+    else
+      # handle failed deletion
+    end
   end
 
   private
 
+  def set_user
+    @user = User.find(params[:id])
+  end
+
   def user_params
-    permitted = params.permit(user: [:first_name, :last_name, :email, :password])
-    permitted.merge!(client_id: Rails.application.credentials.showoff_client_id,
-                  client_secret: Rails.application.credentials.showoff_client_secret)
+    params.require(:user).permit(:name, :email, :password, :password_confirmation)
   end
 end
